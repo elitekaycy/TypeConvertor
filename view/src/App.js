@@ -3,18 +3,14 @@ import {DynamicEditor} from './components/DynamicEditor';
 import {Navbar} from './components/Navbar';
 import {InputContext} from './context/input';
 import {outputContext} from './context/output';
-import {Translator} from './core/Translator';
+// import {Translator} from './core/Translator';
+// import {stripQuotation} from './helpers/stripQuotation';
+import {isJsonType, isObjectType, jsonToTypeScript, objectStringToTypeScript} from './helpers/refineOutput';
+import {ScrollToSectionButton} from './components/ScrollableLink';
 
 function App() {
     const {code, setCode} = useContext(InputContext);
     const {output, setOutput} = useContext(outputContext);
-
-    const stripQuotation = (obj) => {
-        var convertedStr = obj.replace(/"/g, '');
-        let replaceBracket = convertedStr.replace(/{/g, '{ \n\t\t').replace(/}/g, ' \n\t }').replace(/:/g, ': ');
-        let finalStr = replaceBracket.replace(/,/g, '; \n\t\t');
-        return finalStr;
-    };
 
     return (
         <>
@@ -28,17 +24,20 @@ function App() {
                 <Navbar/>
                 <div className="mt-24 flex text-center flex-col space-y-4">
                     <div className="text-center text-5xl font-bold text-white">
-                        Convert Object To Types
+                        Convert JSON & Object To Types
                     </div>
                     <div className="text-center font-semibold tracking-wide text-white text-lg">
-                        convert js objects to typescipt types
+                        convert js objects and json to typescipt types. speed up type generation in projects
                     </div>
-                    <div className="cursor-pointer hover:bg-gray-100 font-semibold bg-white p-3 rounded-full w-24 mx-auto text-xs">
-                        Get Started
-                    </div>
+                    <ScrollToSectionButton>
+                        <div className="cursor-pointer hover:bg-gray-100 font-semibold bg-white p-3 rounded-full w-24 mx-auto text-xs">
+                            Get Started
+                        </div>
+                    </ScrollToSectionButton>
                 </div>
 
-                <div style={
+                <div id="codeMirror"
+                    style={
                         {minHeight: '80vh'}
                     }
                     className="mx-auto mt-10  max-w-5xl rounded-3xl flex flex-row border-white border-4 bg-gray-800">
@@ -56,18 +55,21 @@ function App() {
                             onClick={
                                 (e) => { // check code
                                     e.preventDefault();
-                                    let validCode = code;
-                                    console.log("vcode ", validCode)
-                                    const types = new Translator(JSON.parse(validCode));
-
-                                    const typesObject = types.translator();
-                                    console.log("typesObj ", typesObject)
-                                    types.refine(typesObject);
-                                    setOutput(` ${
-                                        stripQuotation(`type inputType = ${
-                                            JSON.stringify(typesObject)
-                                        }`)
-                                    }`);
+                                    try {
+                                        let codeSplit = code.split('=')
+                                        if (codeSplit.length > 1) {
+                                            setOutput(objectStringToTypeScript(codeSplit[1]))
+                                        } else if (isObjectType(code)) {
+                                            let refinedCode = code
+                                            setOutput(objectStringToTypeScript(refinedCode))
+                                        } else if (isJsonType(code)) {
+                                            setOutput(jsonToTypeScript(code))
+                                        } else {
+                                            throw new Error('input is not an object or json')
+                                        }
+                                    } catch (err) {
+                                        console.log("caught error ", 78, err)
+                                    }
                                 }
                             }
                             className="absolute left-44 md:left-96 p-4 pl-4 pr-4 text-xs font-semibold bg-white hover:bg-gray-100 cursor-pointer rounded-full">

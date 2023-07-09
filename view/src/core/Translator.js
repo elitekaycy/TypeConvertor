@@ -38,7 +38,6 @@ export class Translator {
         return object;
     }
 
-
     refine(obj) {
         if (typeof obj === 'object') {
             for (var key in obj) {
@@ -58,7 +57,7 @@ export class Translator {
                         //     }[]`;
                         //     obj[key] = str;
                         // } else {
-                        return obj[key]
+                        return obj[key];
                     }
                 } else if (typeof obj[key] === 'object') {
                     this.refine(obj[key]);
